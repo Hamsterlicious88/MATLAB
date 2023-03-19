@@ -14,3 +14,5 @@ gigo=gi./go;
 iggo=ig./go;
 igth=imtophat(iggo,strel('disk',100));
 gith=imtophat(gigo,strel('disk',100));
+figure; imagesc(igth);colormap gray; axis image
+figure; imagesc(gith);colormap gray; axis image
