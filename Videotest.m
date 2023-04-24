@@ -23,3 +23,20 @@ for i=1:length(angs) %where N is the number of images
     writeVideo(video,mat2gray(I)); %write the image to file
 end
 close(video); %close the file
+
+%% This section allows you to write colormap RGB images to video
+video = VideoWriter('cellsnomask.avi'); %create the video object
+video.FrameRate=10;
+open(video); %open the file for writing
+for i=1:length(iOPL) %where N is the number of images
+    %namei=num2str(angs(i));
+    %I = double(imread(strcat('image_',namei,'.tif'))); %read the next image
+    f=rescale(iOPL{i,1});
+    f=im2uint8(f);
+    f=ind2rgb(f,hsv);
+    drawnow
+    %F(i)=getframe(gcf);
+    writeVideo(video,f); %write the image to file
+end
+close(video); %close the file
+%%
