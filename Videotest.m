@@ -24,7 +24,8 @@ for i=1:length(angs) %where N is the number of images
 end
 close(video); %close the file
 
-%% This section allows you to write colormap RGB images to video
+%% 
+%This section allows you to write colormap RGB images to video
 video = VideoWriter('cellsnomask.avi'); %create the video object
 video.FrameRate=10;
 open(video); %open the file for writing
