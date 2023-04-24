@@ -15,6 +15,7 @@ end
 
 %%
 video = VideoWriter('yourvideo.avi'); %create the video object
+video.FrameRate=10; %sets the framerate of the video
 open(video); %open the file for writing
 for i=1:length(angs) %where N is the number of images
     namei=num2str(angs(i));
