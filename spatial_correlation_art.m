@@ -17,10 +17,10 @@ Padd='circular';
 Filt='corr';
 outsize='same';
 
-CorrParam.window=21; %Full Width of correlation window--assume odd for now to center it on a pixel
+CorrParam.window=50; %Full Width of correlation window--assume odd for now to center it on a pixel
 CorrParam.halfwindow=floor(CorrParam.window/2); %Half width of window in each direction from center pixel
 CorrParam.step=1; %Step size in pixels
-CorrParam.extrapad=1; %Extra padding on mesh window to allow >1 pixel shift
+CorrParam.extrapad=2; %Extra padding on mesh window to allow >1 pixel shift
 CorrParam.startidx=[ceil(CorrParam.window/2+CorrParam.extrapad),...
     ceil(CorrParam.window/2+CorrParam.extrapad)]; %Start index not to crop outside image
 CorrParam.endidx=[size(Obj,1)-floor(CorrParam.window/2+CorrParam.extrapad),...
@@ -47,10 +47,10 @@ M1=CMesh.^2;
 CCObj=conv2(C1,flip(flip(Win,1),2),'same');
 CCM=conv2(M1,flip(flip(Win,1),2),'same');
 
-imin=30;
-imax=2030;
-jmin=30;
-jmax=2030;
+imin=100;
+imax=2000;
+jmin=100;
+jmax=2000;
 
 tic
 
