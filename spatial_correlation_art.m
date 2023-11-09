@@ -16,11 +16,11 @@ CMesh=double(Mesh);
 Padd='circular';
 Filt='corr';
 outsize='same';
+regparam=4e-4;
 
-CorrParam.window=50; %Full Width of correlation window--assume odd for now to center it on a pixel
+CorrParam.window=19; %Full Width of correlation window--assume odd for now to center it on a pixel
 CorrParam.halfwindow=floor(CorrParam.window/2); %Half width of window in each direction from center pixel
-CorrParam.step=1; %Step size in pixels
-CorrParam.extrapad=2; %Extra padding on mesh window to allow >1 pixel shift
+CorrParam.extrapad=4; %Extra padding on mesh window to allow >1 pixel shift
 CorrParam.startidx=[ceil(CorrParam.window/2+CorrParam.extrapad),...
     ceil(CorrParam.window/2+CorrParam.extrapad)]; %Start index not to crop outside image
 CorrParam.endidx=[size(Obj,1)-floor(CorrParam.window/2+CorrParam.extrapad),...
@@ -35,26 +35,26 @@ MD=ATT3;
 Nw=CorrParam.halfwindow;
 Ns=CorrParam.extrapad;
 
-Win=hann(2*Nw+1)*hann(2*Nw+1)';
+Win=hamming(2*Nw+1)*hamming(2*Nw+1)';
 Win=Win/sum(Win(:));
 
 C1=CObj.^2;
 M1=CMesh.^2;
 
-% CCObj=imfilter(C1,Win,Padd,Filt,outsize);
-% CCM=imfilter(M1,Win,Padd,Filt,outsize);
+CCObj=imfilter(C1,Win,Padd,Filt,outsize);
+CCM=imfilter(M1,Win,Padd,Filt,outsize);
 
-CCObj=conv2(C1,flip(flip(Win,1),2),'same');
-CCM=conv2(M1,flip(flip(Win,1),2),'same');
+% CCObj=conv2(C1,flip(flip(Win,1),2),'same');
+% CCM=conv2(M1,flip(flip(Win,1),2),'same');
 
-imin=100;
-imax=2000;
-jmin=100;
-jmax=2000;
+imin=40;
+imax=2008;
+jmin=40;
+jmax=2008;
 
 tic
 
-parfor i=imin:imax
+for i=imin:imax
     tic
     for j=jmin:jmax
         t1=CCObj(i,j);
@@ -71,6 +71,12 @@ parfor i=imin:imax
         K=t5./t3;
 
         D = t1  + (K.^2).*t3 - 2*K.*t5;
+
+        
+        % testfit
+        % [X, Y] = meshgrid(1:size(D,2), 1:size(D,1));
+        % fit_model = fit([X(:) Y(:)], D(:), 'biharmonicinterp');
+        % plot(fit_model, [X(:) Y(:)], D(:))
 
         [a2,G] = min(D(:));
         [r2,c2] = ind2sub(size(D),G);
@@ -132,9 +138,12 @@ MD=MD(imin+10:imax,jmin+10:jmax);
 
 [Gx,Gy]=gradient(ATT3);
 
-FCsDPC1=FrankotChellapa(DPCy,DPCx,CorrParam.window,eps,'s');
-FCsDPC2=FrankotChellapa(DPCy2,DPCx2,CorrParam.window,eps,'s');
-FCsgrad=FrankotChellapa(Gy,Gx,CorrParam.window,eps,'a');
+D2a=PoiSolveSym(DPCx2+DPCy2,CorrParam.window,regparam,'a');
+D2s=PoiSolveSym(DPCx2+DPCy2,CorrParam.window,regparam,'s');
+D2n=PoiSolveSym(DPCx2+DPCy2,CorrParam.window,regparam,'n');
+FCsDPC1=FrankotChellapa(DPCy,DPCx,CorrParam.window,regparam,'s');
+FCsDPC2=FrankotChellapa(DPCy2,DPCx2,CorrParam.window,regparam,'s');
+FCsgrad=FrankotChellapa(Gy,Gx,CorrParam.window,regparam,'a');
 
 figure; imagesc(ATT3); colormap gray; axis image
 figure; imagesc(DPCx); colormap gray; axis image
@@ -144,4 +153,6 @@ figure; imagesc(DPCy2); colormap gray; axis image
 figure; imagesc(FCsDPC1); colormap gray; axis image
 figure; imagesc(FCsDPC2); colormap gray; axis image
 figure; imagesc(MD); colormap gray; axis image
-
+figure; imagesc(D2a); colormap gray; axis image
+figure; imagesc(D2n); colormap gray; axis image
+figure; imagesc(D2s); colormap gray; axis image
