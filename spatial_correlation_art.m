@@ -16,11 +16,11 @@ CMesh=double(Mesh);
 Padd='circular';
 Filt='corr';
 outsize='same';
-regparam=4e-4;
+regparam=eps;
 
-CorrParam.window=19; %Full Width of correlation window--assume odd for now to center it on a pixel
+CorrParam.window=11; %Full Width of correlation window--assume odd for now to center it on a pixel
 CorrParam.halfwindow=floor(CorrParam.window/2); %Half width of window in each direction from center pixel
-CorrParam.extrapad=4; %Extra padding on mesh window to allow >1 pixel shift
+CorrParam.extrapad=3; %Extra padding on mesh window to allow >1 pixel shift
 CorrParam.startidx=[ceil(CorrParam.window/2+CorrParam.extrapad),...
     ceil(CorrParam.window/2+CorrParam.extrapad)]; %Start index not to crop outside image
 CorrParam.endidx=[size(Obj,1)-floor(CorrParam.window/2+CorrParam.extrapad),...
@@ -54,7 +54,7 @@ jmax=2008;
 
 tic
 
-for i=imin:imax
+parfor i=imin:imax
     tic
     for j=jmin:jmax
         t1=CCObj(i,j);
@@ -74,9 +74,10 @@ for i=imin:imax
 
         
         % testfit
-        % [X, Y] = meshgrid(1:size(D,2), 1:size(D,1));
-        % fit_model = fit([X(:) Y(:)], D(:), 'biharmonicinterp');
-        % plot(fit_model, [X(:) Y(:)], D(:))
+        % [X, Y] = meshgrid(1:size(D1,2), 1:size(D1,1));
+        % fit_model = fit([X(:) Y(:)], D1(:), 'poly44');
+        % plot(fit_model, [X(:) Y(:)], D1(:))
+        % D=[fit_model(X,Y)];
 
         [a2,G] = min(D(:));
         [r2,c2] = ind2sub(size(D),G);
@@ -89,18 +90,45 @@ Dyp1=Dy+1;
 Dym1=Dy-1;
 
 if Dxm1<1
-    Dxm1=1;
+    Dxm1=Dx;
 end
 if Dym1<1
-    Dym1=1;
+    Dym1=Dy;
 end
 if Dxp1>size(D,2)
-    Dxp1=size(D,2);
+    Dxp1=Dx;
 end
 if Dyp1>size(D,2)
-    Dyp1=size(D,2);
+    Dyp1=Dy;
 end
-
+% 
+% if Dxm1<1
+%     Dxm1=Dx;
+% else 
+%     Dxminus=D(Dy,Dxm1);
+% 
+% end
+% if Dym1<1
+%     Dym1=Dy;
+% else
+%     Dyminus=D(Dym1,Dx);
+% end
+% 
+% if Dxp1>size(D,2)
+%     Dxp1=Dx;
+% else
+%     Dxplus=D(Dy,Dxp1);
+% end
+% 
+% if Dyp1>size(D,2)
+%     Dyp1=Dy;
+% 
+% else
+%     Dyplus=D(Dyp1,Dx);
+% end
+% 
+% Dx0=D(Dy,Dx);
+% Dy0=D(Dy,Dx);
 
         
         Dxminus=D(Dy,Dxm1);
@@ -156,3 +184,31 @@ figure; imagesc(MD); colormap gray; axis image
 figure; imagesc(D2a); colormap gray; axis image
 figure; imagesc(D2n); colormap gray; axis image
 figure; imagesc(D2s); colormap gray; axis image
+
+function [Dx,Dy] = subpixpeak(z)
+%SUBPIXPEAK computes a 2D quadratic surface fit to a 3x3 neighborhood
+%   centered on the peak of the cross-correlation. 
+%   z is the 3x3 matrix of values of the cross correlation
+%   [Dx,Dy] are the relative positions of the fitted peak compared to the
+%   central coordinate of the 3x3 matrix
+X=[-1,0,1;-1,0,1;-1,0,1]; %Set up coordinates for X
+Y=X';                    % "                  "  Y
+
+%Solve a*x^2+b*x+c*x*y+d*y^2+e*y+f=z for all 9 points
+%x^2,x,xy,y^2,y values for the 9 points are arranged as columns of A with
+%1s in the last column
+%then z(:)=A*b represents our data, where B is a vector of [a,b,c,d,e,f]
+%So Z\A=B solves the coefficients
+A=[X(:).^2,X(:),X(:).*Y(:),Y(:).^2,Y(:),ones(length(Y(:)),1)];
+b=z(:)\A;
+
+denom=(b(3)^2-4*b(1)*b(4));
+Dx=(2*b(2)*b(4)-b(3)*b(5))/denom;
+Dy=(2*b(1)*b(5)-b(2)*b(3))/denom;
+%To do: 
+% 1) Differentiate analytically to find expression for critical points
+%   in x and y to compute sub-pixel coord
+% 2) Then calculate determinant to verify that this is a maximum vs min vs
+%   saddle
+
+end
